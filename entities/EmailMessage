@@ -1,0 +1,80 @@
+{
+  "name": "EmailMessage",
+  "type": "object",
+  "properties": {
+    "mailbox_id": {
+      "type": "string",
+      "title": "Mailbox ID"
+    },
+    "subject": {
+      "type": "string",
+      "title": "Subject"
+    },
+    "from_address": {
+      "type": "string",
+      "title": "From Address"
+    },
+    "from_name": {
+      "type": "string",
+      "title": "From Name"
+    },
+    "to_addresses": {
+      "type": "string",
+      "title": "To Addresses"
+    },
+    "cc_addresses": {
+      "type": "string",
+      "title": "CC Addresses"
+    },
+    "body_preview": {
+      "type": "string",
+      "title": "Body Preview"
+    },
+    "body_html": {
+      "type": "string",
+      "title": "Body HTML"
+    },
+    "folder": {
+      "type": "string",
+      "enum": [
+        "inbox",
+        "sent",
+        "drafts",
+        "trash",
+        "spam",
+        "archive"
+      ],
+      "title": "Folder"
+    },
+    "is_read": {
+      "type": "boolean",
+      "title": "Is Read"
+    },
+    "is_starred": {
+      "type": "boolean",
+      "title": "Is Starred"
+    },
+    "has_attachments": {
+      "type": "boolean",
+      "title": "Has Attachments"
+    },
+    "labels": {
+      "type": "string",
+      "title": "Labels"
+    },
+    "thread_id": {
+      "type": "string",
+      "title": "Thread ID"
+    },
+    "message_date": {
+      "type": "string",
+      "title": "Message Date"
+    }
+  },
+  "required": [
+    "mailbox_id",
+    "subject",
+    "from_address",
+    "folder"
+  ]
+}

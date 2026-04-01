@@ -1,0 +1,56 @@
+{
+  "name": "DnsRecord",
+  "type": "object",
+  "properties": {
+    "domain_id": {
+      "type": "string",
+      "title": "Domain ID"
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "MX",
+        "TXT",
+        "CNAME",
+        "A",
+        "AAAA"
+      ],
+      "title": "Record Type"
+    },
+    "name": {
+      "type": "string",
+      "title": "Record Name"
+    },
+    "value": {
+      "type": "string",
+      "title": "Record Value"
+    },
+    "priority": {
+      "type": "number",
+      "title": "Priority"
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "mx",
+        "spf",
+        "dkim",
+        "dmarc",
+        "verification",
+        "autodiscover"
+      ],
+      "title": "Purpose"
+    },
+    "is_verified": {
+      "type": "boolean",
+      "title": "Is Verified"
+    }
+  },
+  "required": [
+    "domain_id",
+    "record_type",
+    "name",
+    "value",
+    "purpose"
+  ]
+}
