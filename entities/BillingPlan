@@ -1,0 +1,47 @@
+{
+  "name": "BillingPlan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Plan Name"
+    },
+    "slug": {
+      "type": "string",
+      "title": "Slug"
+    },
+    "price_monthly": {
+      "type": "number",
+      "title": "Monthly Price"
+    },
+    "price_yearly": {
+      "type": "number",
+      "title": "Yearly Price"
+    },
+    "max_users": {
+      "type": "number",
+      "title": "Max Users"
+    },
+    "max_domains": {
+      "type": "number",
+      "title": "Max Domains"
+    },
+    "storage_per_user_mb": {
+      "type": "number",
+      "title": "Storage Per User (MB)"
+    },
+    "features": {
+      "type": "string",
+      "title": "Features (JSON)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+    }
+  },
+  "required": [
+    "name",
+    "slug",
+    "price_monthly"
+  ]
+}

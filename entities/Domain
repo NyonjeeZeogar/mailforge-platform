@@ -1,0 +1,58 @@
+{
+  "name": "Domain",
+  "type": "object",
+  "properties": {
+    "domain_name": {
+      "type": "string",
+      "title": "Domain Name"
+    },
+    "organization_id": {
+      "type": "string",
+      "title": "Organization ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verifying",
+        "verified",
+        "failed",
+        "suspended"
+      ],
+      "title": "Status"
+    },
+    "mx_verified": {
+      "type": "boolean",
+      "title": "MX Verified"
+    },
+    "spf_verified": {
+      "type": "boolean",
+      "title": "SPF Verified"
+    },
+    "dkim_verified": {
+      "type": "boolean",
+      "title": "DKIM Verified"
+    },
+    "dmarc_verified": {
+      "type": "boolean",
+      "title": "DMARC Verified"
+    },
+    "catch_all_enabled": {
+      "type": "boolean",
+      "title": "Catch-All Enabled"
+    },
+    "catch_all_target": {
+      "type": "string",
+      "title": "Catch-All Target"
+    },
+    "last_verified_at": {
+      "type": "string",
+      "title": "Last Verified At"
+    }
+  },
+  "required": [
+    "domain_name",
+    "organization_id",
+    "status"
+  ]
+}

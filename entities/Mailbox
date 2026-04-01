@@ -1,0 +1,80 @@
+{
+  "name": "Mailbox",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "title": "Email Address"
+    },
+    "display_name": {
+      "type": "string",
+      "title": "Display Name"
+    },
+    "organization_id": {
+      "type": "string",
+      "title": "Organization ID"
+    },
+    "domain_id": {
+      "type": "string",
+      "title": "Domain ID"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "personal",
+        "shared",
+        "alias",
+        "group"
+      ],
+      "title": "Type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "disabled",
+        "suspended"
+      ],
+      "title": "Status"
+    },
+    "storage_used_mb": {
+      "type": "number",
+      "title": "Storage Used (MB)"
+    },
+    "storage_limit_mb": {
+      "type": "number",
+      "title": "Storage Limit (MB)"
+    },
+    "forwarding_enabled": {
+      "type": "boolean",
+      "title": "Forwarding Enabled"
+    },
+    "forwarding_address": {
+      "type": "string",
+      "title": "Forwarding Address"
+    },
+    "auto_reply_enabled": {
+      "type": "boolean",
+      "title": "Auto Reply Enabled"
+    },
+    "auto_reply_message": {
+      "type": "string",
+      "title": "Auto Reply Message"
+    },
+    "last_login_at": {
+      "type": "string",
+      "title": "Last Login At"
+    },
+    "unread_count": {
+      "type": "number",
+      "title": "Unread Count"
+    }
+  },
+  "required": [
+    "email",
+    "display_name",
+    "organization_id",
+    "type",
+    "status"
+  ]
+}

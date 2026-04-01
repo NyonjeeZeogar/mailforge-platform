@@ -1,0 +1,63 @@
+{
+  "name": "Organization",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Organization Name"
+    },
+    "slug": {
+      "type": "string",
+      "title": "Slug"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "starter",
+        "business",
+        "enterprise"
+      ],
+      "title": "Plan"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "trial",
+        "cancelled"
+      ],
+      "title": "Status"
+    },
+    "trial_ends_at": {
+      "type": "string",
+      "title": "Trial Ends At"
+    },
+    "max_users": {
+      "type": "number",
+      "title": "Max Users"
+    },
+    "max_domains": {
+      "type": "number",
+      "title": "Max Domains"
+    },
+    "storage_used_mb": {
+      "type": "number",
+      "title": "Storage Used (MB)"
+    },
+    "storage_limit_mb": {
+      "type": "number",
+      "title": "Storage Limit (MB)"
+    },
+    "owner_email": {
+      "type": "string",
+      "title": "Owner Email"
+    }
+  },
+  "required": [
+    "name",
+    "plan",
+    "status"
+  ]
+}

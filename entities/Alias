@@ -1,0 +1,35 @@
+{
+  "name": "Alias",
+  "type": "object",
+  "properties": {
+    "alias_address": {
+      "type": "string",
+      "title": "Alias Address"
+    },
+    "target_mailbox_id": {
+      "type": "string",
+      "title": "Target Mailbox ID"
+    },
+    "target_email": {
+      "type": "string",
+      "title": "Target Email"
+    },
+    "domain_id": {
+      "type": "string",
+      "title": "Domain ID"
+    },
+    "organization_id": {
+      "type": "string",
+      "title": "Organization ID"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+    }
+  },
+  "required": [
+    "alias_address",
+    "target_email",
+    "organization_id"
+  ]
+}
