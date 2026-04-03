@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users     User[]
+  domains   Domain[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  role           String   @default("admin")
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+}
+
+model Domain {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  verified       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
+  mailboxes      Mailbox[]
+  dnsRecords     DnsRecord[]
+}
+
+model Mailbox {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  domain   Domain @relation(fields: [domainId], references: [id])
+  domainId String
+
+  aliases  Alias[]
+}
+
+model Alias {
+  id        String   @id @default(cuid())
+  address   String
+  createdAt DateTime @default(now())
+
+  mailbox   Mailbox @relation(fields: [mailboxId], references: [id])
+  mailboxId String
+}
+
+model DnsRecord {
+  id        String   @id @default(cuid())
+  type      String
+  name      String
+  value     String
+  verified  Boolean  @default(false)
+
+  domain   Domain @relation(fields: [domainId], references: [id])
+  domainId String
+}
