@@ -6,37 +6,60 @@ datasource db {
   provider = "postgresql"
 }
 
-model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
+enum DomainStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
 
-  users     User[]
-  domains   Domain[]
+enum DnsRecordType {
+  MX
+  TXT
+  CNAME
+}
+
+enum DnsRecordStatus {
+  REQUIRED
+  VERIFIED
+  MISSING
+}
+
+model Organization {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  users   User[]
+  domains Domain[]
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  passwordHash   String
-  role           String   @default("admin")
-  createdAt      DateTime @default(now())
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
 
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
 }
 
 model Domain {
-  id             String   @id @default(cuid())
-  name           String   @unique
-  verified       Boolean  @default(false)
-  createdAt      DateTime @default(now())
+  id                String       @id @default(cuid())
+  name              String       @unique
+  status            DomainStatus @default(PENDING)
+  isCatchAllEnabled Boolean      @default(false)
+  verificationToken String       @default("")
+  verifiedAt        DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime?    @updatedAt
 
-  organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  mailboxes      Mailbox[]
-  dnsRecords     DnsRecord[]
+  mailboxes  Mailbox[]
+  dnsRecords DomainDnsRecord[]
 }
 
 model Mailbox {
@@ -48,7 +71,7 @@ model Mailbox {
   domain   Domain @relation(fields: [domainId], references: [id])
   domainId String
 
-  aliases  Alias[]
+  aliases Alias[]
 }
 
 model Alias {
@@ -60,13 +83,20 @@ model Alias {
   mailboxId String
 }
 
-model DnsRecord {
-  id        String   @id @default(cuid())
-  type      String
-  name      String
-  value     String
-  verified  Boolean  @default(false)
+model DomainDnsRecord {
+  id         String          @id @default(cuid())
+  type       DnsRecordType
+  host       String
+  value      String
+  priority   Int?
+  ttl        Int?
+  status     DnsRecordStatus @default(REQUIRED)
+  isOptional Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
 
-  domain   Domain @relation(fields: [domainId], references: [id])
   domainId String
+  domain   Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@index([domainId])
 }
