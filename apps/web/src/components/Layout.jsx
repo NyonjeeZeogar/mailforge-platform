@@ -5,8 +5,6 @@ import {
   Shield, Activity, ChevronLeft, ChevronRight, Search, Bell,
   Menu, X, Zap
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -24,14 +22,14 @@ export default function Layout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { data: user } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => base44.auth.me(),
-  });
+
+  const user = {
+    full_name: "Admin",
+    email: "admin@esp.io",
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -39,7 +37,6 @@ export default function Layout() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
@@ -49,7 +46,6 @@ export default function Layout() {
           ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        {/* Logo */}
         <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
             <Zap className="w-4 h-4 text-primary-foreground" />
@@ -61,11 +57,12 @@ export default function Layout() {
           )}
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || 
+            const isActive =
+              location.pathname === item.path ||
               (item.path !== "/" && location.pathname.startsWith(item.path));
+
             return (
               <Link
                 key={item.path}
@@ -89,7 +86,6 @@ export default function Layout() {
           })}
         </nav>
 
-        {/* Collapse button */}
         <div className="hidden lg:flex items-center justify-center p-3 border-t border-sidebar-border">
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -100,9 +96,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
         <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 lg:px-6">
           <div className="flex items-center gap-4">
             <button
@@ -111,6 +105,7 @@ export default function Layout() {
             >
               <Menu className="w-5 h-5" />
             </button>
+
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -126,21 +121,21 @@ export default function Layout() {
               <Bell className="w-5 h-5 text-muted-foreground" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
             </button>
+
             <div className="flex items-center gap-3 pl-3 border-l border-border">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="text-sm font-semibold text-primary">
-                  {user?.full_name?.charAt(0) || "A"}
+                  {user.full_name?.charAt(0) || "A"}
                 </span>
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium leading-none">{user?.full_name || "Admin"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{user?.email || "admin@esp.io"}</p>
+                <p className="text-sm font-medium leading-none">{user.full_name || "Admin"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{user.email || "admin@esp.io"}</p>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
