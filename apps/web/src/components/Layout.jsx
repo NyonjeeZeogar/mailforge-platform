@@ -1,9 +1,10 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/lib/AuthContext";
 import {
   LayoutDashboard, Globe, Users, Mail, CreditCard, Settings,
   Shield, Activity, ChevronLeft, ChevronRight, Search, Bell,
-  Menu, X, Zap
+  Menu, Zap
 } from "lucide-react";
 
 const navItems = [
@@ -22,11 +23,14 @@ export default function Layout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, isLoadingAuth } = useAuth();
 
-  const user = {
-    full_name: "Admin",
-    email: "admin@esp.io",
-  };
+  if (isLoadingAuth) {
+    return <div className="p-6">Loading...</div>;
+  }
+
+  const displayName = user?.name || "Admin";
+  const displayEmail = user?.email || "admin@esp.io";
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -125,12 +129,12 @@ export default function Layout() {
             <div className="flex items-center gap-3 pl-3 border-l border-border">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="text-sm font-semibold text-primary">
-                  {user.full_name?.charAt(0) || "A"}
+                  {displayName.charAt(0)}
                 </span>
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium leading-none">{user.full_name || "Admin"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{user.email || "admin@esp.io"}</p>
+                <p className="text-sm font-medium leading-none">{displayName}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{displayEmail}</p>
               </div>
             </div>
           </div>
