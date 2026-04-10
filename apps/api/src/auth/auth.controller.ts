@@ -1,18 +1,20 @@
 import { Controller, Get, Post, Res } from '@nestjs/common';
-import { Response } from 'express';
-import { AuthService } from './auth.service';
+import type { Response } from 'express';
 
 @Controller('api/auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-
-  @Get('me')
-  getMe() {
-    return this.authService.getCurrentUser();
-  }
-
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    return this.authService.logout(res);
+    res.clearCookie('mailforge_session');
+    return { success: true };
+  }
+
+  @Get('me')
+  getCurrentUser() {
+    return {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+    };
   }
 }

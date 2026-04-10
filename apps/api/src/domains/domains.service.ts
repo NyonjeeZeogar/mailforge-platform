@@ -114,6 +114,22 @@ export class DomainsService {
     });
   }
 
+  async remove(id: string) {
+    const domain = await this.prisma.domain.findUnique({
+      where: { id },
+    });
+
+    if (!domain) {
+      throw new NotFoundException('Domain not found');
+    }
+
+    await this.prisma.domain.delete({
+      where: { id },
+    });
+
+    return { success: true };
+  }
+
   private generateVerificationToken(): string {
     return randomBytes(16).toString('hex');
   }

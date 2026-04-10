@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Plus, Search, Globe } from "lucide-react";
+import { Plus, Search, Globe, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DomainCard from "../components/domains/DomainCard";
+import { api } from "../lib/api";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-
-const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function Domains() {
   const [search, setSearch] = useState("");
@@ -17,15 +20,15 @@ export default function Domains() {
   const [newDomain, setNewDomain] = useState("");
   const queryClient = useQueryClient();
 
-  // ✅ Fetch domains from your Nest API
-  const { data: domains = [], isLoading } = useQuery({
+  const {
+    data: domains = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["domains"],
     queryFn: async () => {
-      const res = await fetch(`${API}/domains`);
-      if (!res.ok) throw new Error("Failed to fetch domains");
-      const data = await res.json();
+      const data = await api.get("/domains");
 
-      // 🔁 map backend → UI shape expected by DomainCard
       return data.map((d) => ({
         ...d,
         domain_name: d.name,
@@ -33,35 +36,19 @@ export default function Domains() {
     },
   });
 
-  // ✅ Create domain via your Nest API
   const createDomain = useMutation({
     mutationFn: async (domainName) => {
-      // get organization
-      const orgRes = await fetch(`${API}/organizations`);
-      const orgs = await orgRes.json();
+      const orgs = await api.get("/organizations");
 
-      if (!orgs.length) {
+      if (!Array.isArray(orgs) || orgs.length === 0) {
         throw new Error("No organization found");
       }
 
-      const res = await fetch(`${API}/domains`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: domainName,
-          organizationId: orgs[0].id,
-          isCatchAllEnabled: true,
-        }),
+      return api.post("/domains", {
+        name: domainName,
+        organizationId: orgs[0].id,
+        isCatchAllEnabled: true,
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        throw new Error(err?.message || "Failed to create domain");
-      }
-
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
@@ -70,21 +57,41 @@ export default function Domains() {
     },
   });
 
+  const deleteDomain = useMutation({
+    mutationFn: async (id) => {
+      return api.delete(`/domains/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["domains"] });
+    },
+  });
+
   const handleCreate = () => {
     if (!newDomain.trim()) return;
     createDomain.mutate(newDomain.trim());
   };
 
-  const filtered =
-    domains.filter((d) =>
-      d.domain_name?.toLowerCase().includes(search.toLowerCase())
-    ) || [];
+  const handleDelete = (id, name) => {
+    const confirmed = window.confirm(
+      `Delete domain "${name}"? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    deleteDomain.mutate(id);
+  };
+
+  const filtered = domains.filter((d) =>
+    d.domain_name?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="p-4 lg:p-8 space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Domains</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
+            Domains
+          </h1>
           <p className="text-muted-foreground mt-1">
             Manage your email domains and DNS records
           </p>
@@ -113,8 +120,15 @@ export default function Domains() {
               </div>
 
               <p className="text-sm text-muted-foreground">
-                After adding, you'll need to configure DNS records to verify your domain.
+                After adding, you'll need to configure DNS records to verify
+                your domain.
               </p>
+
+              {createDomain.error ? (
+                <p className="text-sm text-red-500">
+                  {createDomain.error.message}
+                </p>
+              ) : null}
 
               <Button
                 onClick={handleCreate}
@@ -128,7 +142,6 @@ export default function Domains() {
         </Dialog>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -139,7 +152,18 @@ export default function Domains() {
         />
       </div>
 
-      {/* Domain List */}
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          {error.message || "Failed to load domains"}
+        </div>
+      ) : null}
+
+      {deleteDomain.error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          {deleteDomain.error.message || "Failed to delete domain"}
+        </div>
+      ) : null}
+
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" />
@@ -151,13 +175,29 @@ export default function Domains() {
           </div>
           <h3 className="text-lg font-semibold">No domains yet</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-            Add your first domain to start setting up custom email addresses for your organization.
+            Add your first domain to start setting up custom email addresses for
+            your organization.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filtered.map((domain) => (
-            <DomainCard key={domain.id} domain={domain} />
+            <div key={domain.id} className="space-y-3">
+              <DomainCard domain={domain} />
+
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDelete(domain.id, domain.domain_name)}
+                  disabled={deleteDomain.isPending}
+                  className="gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {deleteDomain.isPending ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
       )}

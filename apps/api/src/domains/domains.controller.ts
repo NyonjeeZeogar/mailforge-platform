@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { DomainsService } from './domains.service';
 import { CreateDomainDto } from './dto/create-domain.dto';
 import { VerifyDomainDto } from './dto/verify-domain.dto';
@@ -25,5 +25,10 @@ export class DomainsController {
   @Post(':id/verify')
   verify(@Param('id') id: string, @Body() dto: VerifyDomainDto) {
     return this.domainsService.verify(id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.domainsService.remove(id);
   }
 }
