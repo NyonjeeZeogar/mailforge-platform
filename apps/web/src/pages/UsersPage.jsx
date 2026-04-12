@@ -32,7 +32,10 @@ export default function UsersPage() {
     queryFn: () => api.get("/users"),
   });
 
-  const { data: organizations = [], isLoading: isLoadingOrganizations } = useQuery({
+  const {
+    data: organizations = [],
+    isLoading: isLoadingOrganizations,
+  } = useQuery({
     queryKey: ["organizations"],
     queryFn: () => api.get("/organizations"),
   });
@@ -51,6 +54,7 @@ export default function UsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-events"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setOpen(false);
       setEmail("");
@@ -64,6 +68,7 @@ export default function UsersPage() {
     mutationFn: (id) => api.delete(`/users/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-events"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
   });
@@ -249,9 +254,7 @@ export default function UsersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    handleDelete(user.id, user.name || user.email)
-                  }
+                  onClick={() => handleDelete(user.id, user.name || user.email)}
                   disabled={deleteUser.isPending}
                   className="gap-2"
                 >

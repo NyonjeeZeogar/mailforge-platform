@@ -1,4 +1,4 @@
-import { Globe, Mail } from "lucide-react";
+import { Globe, Mail, Trash2, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 const API = import.meta.env.VITE_API_BASE_URL;
@@ -25,41 +25,14 @@ function getRelativeTime(dateString) {
 }
 
 export default function RecentActivity() {
-  const { data: mailboxes = [] } = useQuery({
-    queryKey: ["mailboxes"],
+  const { data: activity = [] } = useQuery({
+    queryKey: ["activity-events"],
     queryFn: async () => {
-      const res = await fetch(`${API}/mailboxes`);
-      if (!res.ok) throw new Error("Failed to fetch mailboxes");
+      const res = await fetch(`${API}/activity-events`);
+      if (!res.ok) throw new Error("Failed to fetch activity events");
       return res.json();
     },
   });
-
-  const { data: domains = [] } = useQuery({
-    queryKey: ["domains"],
-    queryFn: async () => {
-      const res = await fetch(`${API}/domains`);
-      if (!res.ok) throw new Error("Failed to fetch domains");
-      return res.json();
-    },
-  });
-
-  const mailboxActivity = mailboxes.map((mailbox) => ({
-    id: `mailbox-${mailbox.id}`,
-    type: "mailbox",
-    message: `New mailbox ${mailbox.address} created`,
-    createdAt: mailbox.createdAt,
-  }));
-
-  const domainActivity = domains.map((domain) => ({
-    id: `domain-${domain.id}`,
-    type: "domain",
-    message: `Domain ${domain.name} added`,
-    createdAt: domain.createdAt,
-  }));
-
-  const activity = [...mailboxActivity, ...domainActivity]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 8);
 
   return (
     <div className="rounded-xl border bg-card p-6 shadow-sm">
@@ -73,7 +46,14 @@ export default function RecentActivity() {
       ) : (
         <div className="space-y-6">
           {activity.map((item) => {
-            const Icon = item.type === "mailbox" ? Mail : Globe;
+            let Icon = Globe;
+
+            if (item.type === "user_invited") Icon = Users;
+            if (item.type === "user_deleted") Icon = Trash2;
+            if (item.type === "mailbox_created") Icon = Mail;
+            if (item.type === "mailbox_deleted") Icon = Trash2;
+            if (item.type === "domain_created") Icon = Globe;
+            if (item.type === "domain_deleted") Icon = Trash2;
 
             return (
               <div key={item.id} className="flex items-start gap-4">

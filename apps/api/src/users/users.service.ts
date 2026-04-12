@@ -5,10 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InviteUserDto } from './dto/invite-user.dto';
+import { ActivityEventsService } from '../activity-events/activity-events.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityEventsService: ActivityEventsService,
+  ) {}
 
   async findAll() {
     return this.prisma.user.findMany({
@@ -47,7 +51,7 @@ export class UsersService {
       );
     }
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email,
         name,
@@ -59,6 +63,15 @@ export class UsersService {
         organization: true,
       },
     });
+
+    await this.activityEventsService.create({
+      type: 'user_invited',
+      message: `New user ${user.name || user.email} invited`,
+      entityType: 'user',
+      entityId: user.id,
+    });
+
+    return user;
   }
 
   async remove(id: string) {
@@ -72,6 +85,13 @@ export class UsersService {
 
     await this.prisma.user.delete({
       where: { id },
+    });
+
+    await this.activityEventsService.create({
+      type: 'user_deleted',
+      message: `User ${user.name || user.email} deleted`,
+      entityType: 'user',
+      entityId: user.id,
     });
 
     return { success: true };
