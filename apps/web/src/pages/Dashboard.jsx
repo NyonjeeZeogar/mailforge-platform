@@ -26,8 +26,16 @@ export default function Dashboard() {
     },
   });
 
-  const mailboxCount = 0; // backend mailbox endpoint not wired yet
+  const { data: mailboxes = [] } = useQuery({
+    queryKey: ["mailboxes"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/mailboxes`);
+      if (!res.ok) throw new Error("Failed to fetch mailboxes");
+      return res.json();
+    },
+  });
 
+  const mailboxCount = mailboxes.length;
   const orgCount = orgs.length;
   const domainCount = domains.length;
   const verifiedDomains = domains.filter(
