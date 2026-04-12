@@ -1,41 +1,97 @@
-import { Globe, Mail, Users, Shield, AlertTriangle } from "lucide-react";
+import { Globe, Mail } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
-const activities = [
-  { icon: Globe, text: "Domain acme.com verified successfully", time: "2 min ago", type: "success" },
-  { icon: Mail, text: "New mailbox john@acme.com created", time: "15 min ago", type: "info" },
-  { icon: Users, text: "3 new users invited to TechCorp org", time: "1 hour ago", type: "info" },
-  { icon: Shield, text: "DKIM rotation completed for startup.io", time: "2 hours ago", type: "success" },
-  { icon: AlertTriangle, text: "High bounce rate detected for blast.co", time: "3 hours ago", type: "warning" },
-  { icon: Mail, text: "Migration from Google Workspace completed", time: "5 hours ago", type: "success" },
-  { icon: Globe, text: "Domain newco.dev DNS verification pending", time: "6 hours ago", type: "info" },
-];
+const API = import.meta.env.VITE_API_BASE_URL;
 
-const typeColors = {
-  success: "text-success bg-success/10",
-  warning: "text-warning bg-warning/10",
-  info: "text-primary bg-primary/10",
-};
+function getRelativeTime(dateString) {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInSeconds = Math.floor((now - date) / 1000);
+
+  if (diffInSeconds < 60) return "Just now";
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} min ago`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
+}
 
 export default function RecentActivity() {
+  const { data: mailboxes = [] } = useQuery({
+    queryKey: ["mailboxes"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/mailboxes`);
+      if (!res.ok) throw new Error("Failed to fetch mailboxes");
+      return res.json();
+    },
+  });
+
+  const { data: domains = [] } = useQuery({
+    queryKey: ["domains"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/domains`);
+      if (!res.ok) throw new Error("Failed to fetch domains");
+      return res.json();
+    },
+  });
+
+  const mailboxActivity = mailboxes.map((mailbox) => ({
+    id: `mailbox-${mailbox.id}`,
+    type: "mailbox",
+    message: `New mailbox ${mailbox.address} created`,
+    createdAt: mailbox.createdAt,
+  }));
+
+  const domainActivity = domains.map((domain) => ({
+    id: `domain-${domain.id}`,
+    type: "domain",
+    message: `Domain ${domain.name} added`,
+    createdAt: domain.createdAt,
+  }));
+
+  const activity = [...mailboxActivity, ...domainActivity]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 8);
+
   return (
-    <div className="bg-card rounded-xl border border-border p-6">
-      <div className="mb-5">
-        <h3 className="text-lg font-semibold">Recent Activity</h3>
-        <p className="text-sm text-muted-foreground">Latest platform events</p>
+    <div className="rounded-xl border bg-card p-6 shadow-sm">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold">Recent Activity</h2>
+        <p className="text-muted-foreground mt-1">Latest platform events</p>
       </div>
-      <div className="space-y-3">
-        {activities.map((item, i) => (
-          <div key={i} className="flex items-start gap-3 py-2">
-            <div className={`p-2 rounded-lg ${typeColors[item.type]}`}>
-              <item.icon className="w-4 h-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium leading-snug">{item.text}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{item.time}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+
+      {activity.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No recent activity yet.</p>
+      ) : (
+        <div className="space-y-6">
+          {activity.map((item) => {
+            const Icon = item.type === "mailbox" ? Mail : Globe;
+
+            return (
+              <div key={item.id} className="flex items-start gap-4">
+                <div className="rounded-2xl bg-muted p-3">
+                  <Icon className="h-5 w-5 text-primary" />
+                </div>
+
+                <div>
+                  <p className="font-medium">{item.message}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {getRelativeTime(item.createdAt)}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

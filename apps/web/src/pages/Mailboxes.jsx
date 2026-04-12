@@ -52,6 +52,7 @@ export default function Mailboxes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mailboxes"] });
+      queryClient.invalidateQueries({ queryKey: ["domains"] });
       setOpen(false);
       setLocalPart("");
       setDomainId("");
@@ -64,6 +65,7 @@ export default function Mailboxes() {
     mutationFn: (id) => api.delete(`/mailboxes/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mailboxes"] });
+      queryClient.invalidateQueries({ queryKey: ["domains"] });
     },
   });
 
