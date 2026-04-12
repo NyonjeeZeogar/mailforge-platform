@@ -25,13 +25,15 @@ enum DnsRecordStatus {
 }
 
 model Organization {
-  id        String    @id @default(cuid())
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime? @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  supportEmail String?
+  timezone     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  users   User[]
-  domains Domain[]
+  users        User[]
+  domains      Domain[]
 }
 
 model User {

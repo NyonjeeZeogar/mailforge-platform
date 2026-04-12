@@ -23,7 +23,9 @@ export async function request(path, options = {}) {
   if (!res.ok) {
     const message =
       typeof data === "object" && data?.message
-        ? data.message
+        ? Array.isArray(data.message)
+          ? data.message.join(", ")
+          : data.message
         : `Request failed with status ${res.status}`;
     throw new Error(message);
   }
@@ -33,11 +35,19 @@ export async function request(path, options = {}) {
 
 export const api = {
   get: (path) => request(path),
+
   post: (path, body) =>
     request(path, {
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,
     }),
+
+  patch: (path, body) =>
+    request(path, {
+      method: "PATCH",
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+
   delete: (path) =>
     request(path, {
       method: "DELETE",

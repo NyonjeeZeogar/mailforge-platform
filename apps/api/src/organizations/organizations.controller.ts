@@ -1,19 +1,27 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
+import { CreateOrganizationDto } from './dto/create-organization.dto';
+import { UpdateOrganizationDto } from './dto/update-organization.dto';
 
 @Controller('organizations')
 export class OrganizationsController {
-  constructor(
-    private readonly organizationsService: OrganizationsService,
-  ) {}
+  constructor(private readonly organizationsService: OrganizationsService) {}
 
   @Post()
-  async create(@Body() body: { name: string }) {
-    return this.organizationsService.create(body);
+  create(@Body() createOrganizationDto: CreateOrganizationDto) {
+    return this.organizationsService.create(createOrganizationDto);
   }
 
   @Get()
-  async findAll() {
+  findAll() {
     return this.organizationsService.findAll();
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updateOrganizationDto: UpdateOrganizationDto,
+  ) {
+    return this.organizationsService.update(id, updateOrganizationDto);
   }
 }
