@@ -101,3 +101,13 @@ model DomainDnsRecord {
 
   @@index([domainId])
 }
+
+model ActivityEvent {
+  id         String   @id @default(cuid())
+  type       String
+  message    String
+  entityType String?
+  entityId   String?
+  createdAt  DateTime @default(now())
+}
+

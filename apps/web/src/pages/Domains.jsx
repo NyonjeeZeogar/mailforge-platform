@@ -52,6 +52,8 @@ export default function Domains() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-events"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setOpen(false);
       setNewDomain("");
     },
@@ -63,6 +65,8 @@ export default function Domains() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-events"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
   });
 

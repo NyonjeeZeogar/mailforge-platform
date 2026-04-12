@@ -5,10 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMailboxDto } from './dto/create-mailbox.dto';
+import { ActivityEventsService } from '../activity-events/activity-events.service';
 
 @Injectable()
 export class MailboxesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityEventsService: ActivityEventsService,
+  ) {}
 
   async create(createMailboxDto: CreateMailboxDto) {
     const localPart = createMailboxDto.localPart.trim().toLowerCase();
@@ -22,10 +26,8 @@ export class MailboxesService {
       throw new NotFoundException('Domain not found');
     }
 
-    // ✅ THIS is the correct field
     const address = `${localPart}@${domain.name}`;
 
-    // ✅ address is UNIQUE in your schema
     const existingMailbox = await this.prisma.mailbox.findUnique({
       where: { address },
     });
@@ -34,9 +36,9 @@ export class MailboxesService {
       throw new BadRequestException('Mailbox already exists');
     }
 
-    return this.prisma.mailbox.create({
+    const mailbox = await this.prisma.mailbox.create({
       data: {
-        address, // ✅ correct field
+        address,
         password,
         domainId: createMailboxDto.domainId,
       },
@@ -44,6 +46,15 @@ export class MailboxesService {
         domain: true,
       },
     });
+
+    await this.activityEventsService.create({
+      type: 'mailbox_created',
+      message: `New mailbox ${mailbox.address} created`,
+      entityType: 'mailbox',
+      entityId: mailbox.id,
+    });
+
+    return mailbox;
   }
 
   async findAll() {
@@ -83,6 +94,13 @@ export class MailboxesService {
 
     await this.prisma.mailbox.delete({
       where: { id },
+    });
+
+    await this.activityEventsService.create({
+      type: 'mailbox_deleted',
+      message: `Mailbox ${mailbox.address} deleted`,
+      entityType: 'mailbox',
+      entityId: mailbox.id,
     });
 
     return { success: true };

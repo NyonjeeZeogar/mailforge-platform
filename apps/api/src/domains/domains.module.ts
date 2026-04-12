@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { DomainsController } from './domains.controller';
 import { DomainsService } from './domains.service';
-import { PrismaModule } from '../prisma/prisma.module';
+import { PrismaService } from '../prisma/prisma.service';
+import { ActivityEventsModule } from '../activity-events/activity-events.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [ActivityEventsModule],
   controllers: [DomainsController],
-  providers: [DomainsService],
+  providers: [DomainsService, PrismaService],
 })
 export class DomainsModule {}
