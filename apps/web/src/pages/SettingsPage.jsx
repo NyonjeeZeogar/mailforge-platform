@@ -1,171 +1,183 @@
-import { useState } from "react";
-import { Save, Building2, Globe, Shield, Mail, Bell, Database } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Building2, Save } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "../lib/api";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const TIMEZONE_OPTIONS = [
+  "Pacific Time (UTC-8)",
+  "Mountain Time (UTC-7)",
+  "Central Time (UTC-6)",
+  "Eastern Time (UTC-5)",
+  "UTC",
+  "London (UTC+0)",
+  "Central Europe (UTC+1)",
+  "Eastern Europe (UTC+2)",
+  "India Standard Time (UTC+5:30)",
+  "China Standard Time (UTC+8)",
+  "Japan Standard Time (UTC+9)",
+  "Australian Eastern Time (UTC+10)",
+];
 
 export default function SettingsPage() {
+  const queryClient = useQueryClient();
+
+  const [name, setName] = useState("");
+  const [supportEmail, setSupportEmail] = useState("");
+  const [timezone, setTimezone] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const {
+    data: organizations = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["organizations"],
+    queryFn: () => api.get("/organizations"),
+  });
+
+  const organization = organizations[0] || null;
+
+  useEffect(() => {
+    if (organization) {
+      setName(organization.name || "");
+      setSupportEmail(organization.supportEmail || "");
+      setTimezone(organization.timezone || "");
+    }
+  }, [organization]);
+
+  const updateOrganization = useMutation({
+    mutationFn: async () => {
+      if (!organization?.id) {
+        throw new Error("No organization found");
+      }
+
+      return api.patch(`/organizations/${organization.id}`, {
+        name: name.trim(),
+        supportEmail: supportEmail.trim() || null,
+        timezone: timezone || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-events"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      setSuccessMessage("Settings saved successfully.");
+
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+    },
+  });
+
+  const handleSave = () => {
+    setSuccessMessage("");
+    if (!name.trim()) return;
+    updateOrganization.mutate();
+  };
+
   return (
     <div className="p-4 lg:p-8 space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">Platform configuration and preferences</p>
+        <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
+          Settings
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Platform configuration and preferences
+        </p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="bg-muted">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="email">Email</TabsTrigger>
-          <TabsTrigger value="dns">DNS & Delivery</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          {error.message || "Failed to load organization settings"}
+        </div>
+      ) : null}
 
-        <TabsContent value="general" className="space-y-6">
-          <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-            <div className="flex items-center gap-3 pb-4 border-b border-border">
-              <Building2 className="w-5 h-5 text-muted-foreground" />
-              <h3 className="text-lg font-semibold">Organization Settings</h3>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+        </div>
+      ) : !organization ? (
+        <div className="rounded-xl border bg-card p-8 text-center">
+          <p className="text-muted-foreground">No organization found.</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border bg-card p-6 shadow-sm space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl bg-muted p-3">
+              <Building2 className="h-5 w-5 text-primary" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <Label>Organization Name</Label>
-                <Input defaultValue="Acme Corp" />
-              </div>
-              <div className="space-y-2">
-                <Label>Primary Domain</Label>
-                <Input defaultValue="acme.com" disabled />
-              </div>
-              <div className="space-y-2">
-                <Label>Support Email</Label>
-                <Input defaultValue="support@acme.com" />
-              </div>
-              <div className="space-y-2">
-                <Label>Timezone</Label>
-                <Select defaultValue="utc-8">
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="utc-8">Pacific Time (UTC-8)</SelectItem>
-                    <SelectItem value="utc-5">Eastern Time (UTC-5)</SelectItem>
-                    <SelectItem value="utc+0">UTC</SelectItem>
-                    <SelectItem value="utc+1">Central European (UTC+1)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold">Organization Settings</h2>
+              <p className="text-sm text-muted-foreground">
+                Manage your organization profile and defaults
+              </p>
             </div>
-            <Button className="gap-2"><Save className="w-4 h-4" /> Save Changes</Button>
           </div>
-        </TabsContent>
 
-        <TabsContent value="email" className="space-y-6">
-          <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-            <div className="flex items-center gap-3 pb-4 border-b border-border">
-              <Mail className="w-5 h-5 text-muted-foreground" />
-              <h3 className="text-lg font-semibold">Email Configuration</h3>
-            </div>
-            <SettingRow label="Default mailbox storage limit" description="Storage allocated per new mailbox">
-              <Select defaultValue="5120">
-                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1024">1 GB</SelectItem>
-                  <SelectItem value="5120">5 GB</SelectItem>
-                  <SelectItem value="15360">15 GB</SelectItem>
-                  <SelectItem value="30720">30 GB</SelectItem>
-                </SelectContent>
-              </Select>
-            </SettingRow>
-            <SettingRow label="Auto-purge trash" description="Automatically delete trash after 30 days">
-              <Switch defaultChecked />
-            </SettingRow>
-            <SettingRow label="Auto-purge spam" description="Automatically delete spam after 14 days">
-              <Switch defaultChecked />
-            </SettingRow>
-            <SettingRow label="Max attachment size" description="Maximum email attachment size in MB">
-              <Select defaultValue="25">
-                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10 MB</SelectItem>
-                  <SelectItem value="25">25 MB</SelectItem>
-                  <SelectItem value="50">50 MB</SelectItem>
-                </SelectContent>
-              </Select>
-            </SettingRow>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="dns" className="space-y-6">
-          <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-            <div className="flex items-center gap-3 pb-4 border-b border-border">
-              <Globe className="w-5 h-5 text-muted-foreground" />
-              <h3 className="text-lg font-semibold">DNS & Delivery Settings</h3>
-            </div>
-            <SettingRow label="Outbound relay" description="SMTP relay for outbound mail delivery">
-              <Select defaultValue="direct">
-                <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="direct">Direct (Postfix)</SelectItem>
-                  <SelectItem value="ses">Amazon SES</SelectItem>
-                  <SelectItem value="mailgun">Mailgun</SelectItem>
-                  <SelectItem value="sendgrid">SendGrid</SelectItem>
-                </SelectContent>
-              </Select>
-            </SettingRow>
-            <SettingRow label="DKIM key rotation" description="Automatic DKIM key rotation interval">
-              <Select defaultValue="90">
-                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 days</SelectItem>
-                  <SelectItem value="90">90 days</SelectItem>
-                  <SelectItem value="180">180 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </SettingRow>
-            <SettingRow label="Cloudflare integration" description="Auto-configure DNS records via Cloudflare API">
-              <Switch defaultChecked />
-            </SettingRow>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Cloudflare API Token</Label>
-              <Input type="password" defaultValue="••••••••••••••••" />
+              <Label>Organization Name</Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Acme Inc"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Support Email</Label>
+              <Input
+                type="email"
+                value={supportEmail}
+                onChange={(e) => setSupportEmail(e.target.value)}
+                placeholder="support@acme.com"
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label>Timezone</Label>
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Select a timezone</option>
+                {TIMEZONE_OPTIONS.map((tz) => (
+                  <option key={tz} value={tz}>
+                    {tz}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-        </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
-          <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-            <div className="flex items-center gap-3 pb-4 border-b border-border">
-              <Bell className="w-5 h-5 text-muted-foreground" />
-              <h3 className="text-lg font-semibold">Notification Preferences</h3>
+          {updateOrganization.error ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+              {updateOrganization.error.message || "Failed to save settings"}
             </div>
-            <SettingRow label="Domain verification alerts" description="Get notified when domain DNS changes">
-              <Switch defaultChecked />
-            </SettingRow>
-            <SettingRow label="High bounce rate alerts" description="Alert when bounce rate exceeds threshold">
-              <Switch defaultChecked />
-            </SettingRow>
-            <SettingRow label="System health alerts" description="Notify when services go down">
-              <Switch defaultChecked />
-            </SettingRow>
-            <SettingRow label="New user registration" description="Notify when new users are added">
-              <Switch />
-            </SettingRow>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+          ) : null}
 
-function SettingRow({ label, description, children }) {
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
-      <div>
-        <p className="text-sm font-medium">{label}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-      </div>
-      {children}
+          {successMessage ? (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+              {successMessage}
+            </div>
+          ) : null}
+
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSave}
+              disabled={updateOrganization.isPending}
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {updateOrganization.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
