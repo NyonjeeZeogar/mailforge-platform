@@ -8,9 +8,10 @@ import { MailboxesModule } from './mailboxes/mailboxes.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ActivityEventsModule } from './activity-events/activity-events.module';
+import { BootstrapModule } from './bootstrap/bootstrap.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, OrganizationsModule, DomainsModule, MailboxesModule, UsersModule, ActivityEventsModule],
+  imports: [PrismaModule, AuthModule, OrganizationsModule, DomainsModule, MailboxesModule, UsersModule, ActivityEventsModule, BootstrapModule],
   controllers: [AppController],
   providers: [AppService],
 })
