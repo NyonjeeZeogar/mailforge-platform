@@ -12,17 +12,34 @@ export class OrganizationsService {
   ) {}
 
   async create(createOrganizationDto: CreateOrganizationDto) {
-    return this.prisma.organization.create({
+    const organization = await this.prisma.organization.create({
       data: {
         name: createOrganizationDto.name,
+        supportEmail: createOrganizationDto.supportEmail ?? null,
+        timezone: createOrganizationDto.timezone ?? null,
+        plan: createOrganizationDto.plan ?? 'business',
+        status: createOrganizationDto.status ?? 'active',
       },
     });
+
+    await this.activityEventsService.create({
+      type: 'organization_created',
+      message: `Organization created: ${organization.name}`,
+      entityType: 'organization',
+      entityId: organization.id,
+    });
+
+    return organization;
   }
 
   async findAll() {
     return this.prisma.organization.findMany({
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'asc',
+      },
+      include: {
+        domains: true,
+        users: true,
       },
     });
   }
@@ -48,43 +65,47 @@ export class OrganizationsService {
           updateOrganizationDto.timezone !== undefined
             ? updateOrganizationDto.timezone
             : organization.timezone,
+        plan:
+          updateOrganizationDto.plan !== undefined
+            ? updateOrganizationDto.plan
+            : organization.plan,
+        status:
+          updateOrganizationDto.status !== undefined
+            ? updateOrganizationDto.status
+            : organization.status,
       },
     });
 
-    const changes: string[] = [];
-
-    if (
-      updateOrganizationDto.name !== undefined &&
-      updateOrganizationDto.name !== organization.name
-    ) {
-      changes.push(`name → ${updatedOrganization.name}`);
-    }
-
-    if (
-      updateOrganizationDto.supportEmail !== undefined &&
-      updateOrganizationDto.supportEmail !== organization.supportEmail
-    ) {
-      changes.push(
-        `support email → ${updatedOrganization.supportEmail || 'cleared'}`,
-      );
-    }
-
-    if (
-      updateOrganizationDto.timezone !== undefined &&
-      updateOrganizationDto.timezone !== organization.timezone
-    ) {
-      changes.push(`timezone → ${updatedOrganization.timezone || 'cleared'}`);
-    }
-
-    if (changes.length > 0) {
-      await this.activityEventsService.create({
-        type: 'organization_updated',
-        message: `Organization settings updated (${changes.join(', ')})`,
-        entityType: 'organization',
-        entityId: updatedOrganization.id,
-      });
-    }
+    await this.activityEventsService.create({
+      type: 'organization_updated',
+      message: `Organization settings updated: ${updatedOrganization.name}`,
+      entityType: 'organization',
+      entityId: updatedOrganization.id,
+    });
 
     return updatedOrganization;
+  }
+
+  async remove(id: string) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { id },
+    });
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    await this.prisma.organization.delete({
+      where: { id },
+    });
+
+    await this.activityEventsService.create({
+      type: 'organization_deleted',
+      message: `Organization deleted: ${organization.name}`,
+      entityType: 'organization',
+      entityId: id,
+    });
+
+    return { success: true };
   }
 }
