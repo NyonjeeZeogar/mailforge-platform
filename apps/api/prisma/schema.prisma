@@ -68,6 +68,7 @@ model Domain {
 model Mailbox {
   id        String   @id @default(cuid())
   address   String   @unique
+  displayName String?
   password  String
   createdAt DateTime @default(now())
 

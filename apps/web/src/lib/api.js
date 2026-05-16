@@ -1,8 +1,8 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
-export async function request(path, options = {}) {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+async function request(path, options = {}) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -11,22 +11,17 @@ export async function request(path, options = {}) {
     ...options,
   });
 
-  const contentType = res.headers.get("content-type") || "";
-  let data = null;
+  const contentType = response.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
 
-  if (contentType.includes("application/json")) {
-    data = await res.json();
-  } else {
-    data = await res.text();
-  }
+  const data = isJson ? await response.json() : await response.text();
 
-  if (!res.ok) {
+  if (!response.ok) {
     const message =
-      typeof data === "object" && data?.message
-        ? Array.isArray(data.message)
-          ? data.message.join(", ")
-          : data.message
-        : `Request failed with status ${res.status}`;
+      (isJson && (data.message || data.error)) ||
+      (typeof data === "string" && data) ||
+      "Request failed";
+
     throw new Error(message);
   }
 
@@ -34,22 +29,55 @@ export async function request(path, options = {}) {
 }
 
 export const api = {
-  get: (path) => request(path),
+  get(path) {
+    return request(path, { method: "GET" });
+  },
 
-  post: (path, body) =>
-    request(path, {
+  post(path, body) {
+    return request(path, {
       method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
-    }),
+      body: JSON.stringify(body),
+    });
+  },
 
-  patch: (path, body) =>
-    request(path, {
+  put(path, body) {
+    return request(path, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  },
+
+  patch(path, body) {
+    return request(path, {
       method: "PATCH",
-      body: body ? JSON.stringify(body) : undefined,
-    }),
+      body: JSON.stringify(body),
+    });
+  },
 
-  delete: (path) =>
-    request(path, {
-      method: "DELETE",
-    }),
+  delete(path) {
+    return request(path, { method: "DELETE" });
+  },
 };
+
+export const getBootstrapStatus = () => api.get("/bootstrap/status");
+
+export const getCurrentUser = () => api.get("/api/auth/me");
+export const logout = () => api.post("/api/auth/logout");
+
+export const getOrganizations = () => api.get("/organizations");
+export const createOrganization = (payload) =>
+  api.post("/organizations", payload);
+
+export const getDomains = () => api.get("/domains");
+export const createDomain = (payload) => api.post("/domains", payload);
+export const deleteDomain = (id) => api.delete(`/domains/${id}`);
+
+export const getMailboxes = () => api.get("/mailboxes");
+export const createMailbox = (payload) => api.post("/mailboxes", payload);
+export const deleteMailbox = (id) => api.delete(`/mailboxes/${id}`);
+
+export const getUsers = () => api.get("/users");
+export const inviteUser = (payload) => api.post("/users/invite", payload);
+export const deleteUser = (id) => api.delete(`/users/${id}`);
+
+export const getActivityEvents = () => api.get("/activity-events");
